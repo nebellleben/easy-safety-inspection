@@ -14,16 +14,22 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     if not update.effective_message:
         return
 
+    keyboard = [[InlineKeyboardButton("🦺 Open Menu", callback_data="menu_back")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     await update.effective_message.reply_text(
         "🦺 *Safety Inspection Bot Help*\n\n"
-        "Available commands:\n\n"
+        "*Available commands:*\n\n"
         "/start - Start the bot or see your profile\n"
+        "/menu - Show the main menu\n"
         "/register - Register your account\n"
         "/report - Report a new safety finding\n"
         "/myreports - View your reported findings\n"
         "/help - Show this help message\n"
         "/cancel - Cancel current operation\n\n"
+        "*Quick Tip:* Type `/` to see all available commands!\n\n"
         "Need help? Contact your administrator.",
+        reply_markup=reply_markup,
         parse_mode="Markdown"
     )
 

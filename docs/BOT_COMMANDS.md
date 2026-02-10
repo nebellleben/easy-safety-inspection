@@ -10,6 +10,27 @@ Search for your Safety Inspection bot on Telegram using the username provided by
 
 Send `/start` to begin. The bot will welcome you and check if you're registered.
 
+## Quick Access Menu
+
+The bot provides multiple ways to access its features:
+
+1. **Command Menu** - Type `/` to see all available commands
+2. **Main Menu** - Use `/menu` for an interactive button menu
+3. **Quick Actions** - Tap buttons in messages to navigate
+
+### /menu
+Display an interactive menu with all bot features.
+
+**Usage:** Send `/menu` to the bot
+
+**Menu Options:**
+- 📝 **Report Finding** - Start a new safety finding report
+- 📋 **My Reports** - View your reported findings
+- 👤 **My Profile** - View your profile details
+- ℹ️ **Help** - Show help information
+
+---
+
 ## Commands
 
 ### /start
