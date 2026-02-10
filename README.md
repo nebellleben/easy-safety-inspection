@@ -6,6 +6,7 @@ A safety inspection finding management system that allows users to report safety
 
 - **Telegram Bot Reporting**: Users can easily report safety findings with photos and descriptions
 - **User Registration**: Simple registration flow via Telegram bot
+- **My Reports**: Users can view all their reported findings with interactive detail views
 - **Role-Based Access Control**: Reporter, Admin, and Super-Admin roles
 - **Area-Based Management**: Predefined areas for categorizing findings
 - **Severity Levels**: Low, Medium, High, Critical
@@ -119,6 +120,7 @@ Findings can be reported in these areas:
 2. Send `/start` to begin
 3. Send `/register` to register your account
 4. Send `/report` to submit a safety finding with photo
+5. Send `/myreports` to view all your reported findings with interactive details
 
 **Registration Flow:**
 1. Enter your full name

@@ -26,6 +26,10 @@ def create_bot_application() -> Application:
     application.add_handler(common.my_reports_handler)
     application.add_handler(common.cancel_handler)
 
+    # Callback handlers for myreports navigation
+    application.add_handler(common.my_reports_detail_handler)
+    application.add_handler(common.my_reports_back_handler)
+
     return application
 
 

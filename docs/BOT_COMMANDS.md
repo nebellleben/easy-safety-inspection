@@ -88,6 +88,43 @@ Submit a new safety finding.
 
 ---
 
+### /myreports
+View all your reported findings with their current status.
+
+**Usage:** Send `/myreports` to the bot
+
+**Features:**
+- Shows a list of all findings you've reported
+- Displays current status and severity for each finding
+- Interactive buttons to view full details of any finding
+- Shows total count of your reports
+- Load more option if you have more than 5 reports
+
+**Detail View:**
+When you click on a report, you'll see:
+- Full description
+- Area and location
+- Severity and status with emojis
+- Report date
+- Assigned person (if applicable)
+- Status history tracking
+- Photos count (if any)
+- Back button to return to the list
+
+**Status Indicators:**
+- 📋 Open - Report received, not yet reviewed
+- 🔄 In Progress - Someone is working on the issue
+- ✅ Resolved - Issue has been fixed
+- 🔒 Closed - Issue verified and closed
+
+**Severity Indicators:**
+- 🟢 Low - Minor issue, no immediate risk
+- 🟡 Medium - Needs attention soon
+- 🟠 High - Significant safety concern
+- 🔴 Critical - Immediate danger, urgent action required
+
+---
+
 ### /help
 Display help information and available commands.
 
