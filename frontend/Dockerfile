@@ -11,7 +11,9 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application with Vite explicitly using the API URL
+ARG VITE_API_URL=https://safety-backend-production.up.railway.app
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 # Production stage: serve with nginx
