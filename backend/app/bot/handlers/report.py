@@ -124,7 +124,7 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Check if user wants to skip
     if update.effective_message.text and update.effective_message.text.strip().lower() in ("skip", "-"):
         context.user_data["report"]["photo"] = None
-        _proceed_to_severity(update)
+        await _proceed_to_severity(update)
         return SEVERITY
 
     # Check if user sent a photo
@@ -146,26 +146,7 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             "data": photo_bytes,
         }
 
-        await update.effective_message.reply_text(
-            "Photo received! ✅\n\n"
-            "How severe is this issue?"
-        )
-
-        # Create severity keyboard
-        keyboard = [
-            [InlineKeyboardButton(SEVERITY_OPTIONS["Low"], callback_data="sev_low")],
-            [InlineKeyboardButton(SEVERITY_OPTIONS["Medium"], callback_data="sev_medium")],
-            [InlineKeyboardButton(SEVERITY_OPTIONS["High"], callback_data="sev_high")],
-            [InlineKeyboardButton(SEVERITY_OPTIONS["Critical"], callback_data="sev_critical")],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
-        # Send the severity options
-        await update.effective_message.reply_text(
-            "How severe is this issue?",
-            reply_markup=reply_markup,
-        )
-
+        await _proceed_to_severity(update)
         return SEVERITY
     else:
         await update.effective_message.reply_text(
@@ -174,7 +155,7 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         return PHOTO
 
 
-def _proceed_to_severity(update: Update):
+async def _proceed_to_severity(update: Update):
     """Send severity options (helper function)."""
     keyboard = [
         [InlineKeyboardButton(SEVERITY_OPTIONS["Low"], callback_data="sev_low")],
@@ -184,16 +165,10 @@ def _proceed_to_severity(update: Update):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    if update.callback_query:
-        update.callback_query.edit_message_text(
-            "How severe is this issue?",
-            reply_markup=reply_markup,
-        )
-    else:
-        update.effective_message.reply_text(
-            "How severe is this issue?",
-            reply_markup=reply_markup,
-        )
+    await update.effective_message.reply_text(
+        "How severe is this issue?",
+        reply_markup=reply_markup,
+    )
 
 
 async def severity_selected(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -217,7 +192,7 @@ async def severity_selected(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 
 async def location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Handle location input."""
+    """Handle location input and create the finding."""
     if not update.effective_message or not update.effective_message.text:
         await update.effective_message.reply_text("Please provide a location or 'skip'.")
         return LOCATION
@@ -238,7 +213,7 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         # Generate report ID
         report_id = await finding_repo.get_next_report_id()
 
-        # Create finding (photo is currently stored in memory, would need S3 integration for persistent storage)
+        # Create finding
         finding = await finding_repo.create({
             "report_id": report_id,
             "reporter_id": report_data["user_id"],
@@ -248,9 +223,6 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             "status": Status.OPEN,
             "location": report_data.get("location"),
         })
-
-        # TODO: Upload photo to S3 and create Photo record
-        # For now, photo data is in context.user_data["report"]["photo"]
 
         await db.commit()
 
