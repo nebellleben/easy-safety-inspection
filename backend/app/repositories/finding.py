@@ -112,11 +112,14 @@ class FindingRepository:
         self.db.add(finding)
         await self.db.flush()
 
+        # Refresh the finding to ensure all relationships are loaded
+        await self.db.refresh(finding)
+
         # Add initial status history
         history = StatusHistory(
             finding_id=finding.id,
             old_status=None,
-            new_status=finding.status,
+            new_status=finding.status.value if hasattr(finding.status, 'value') else str(finding.status),
             notes="Finding created",
             updated_by=finding.reporter_id,
         )

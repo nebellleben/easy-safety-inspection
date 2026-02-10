@@ -207,43 +207,52 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Create finding
     report_data = context.user_data["report"]
 
-    async with async_session() as db:
-        finding_repo = FindingRepository(db)
+    try:
+        async with async_session() as db:
+            finding_repo = FindingRepository(db)
 
-        # Generate report ID
-        report_id = await finding_repo.get_next_report_id()
+            # Generate report ID
+            report_id = await finding_repo.get_next_report_id()
 
-        # Create finding
-        finding = await finding_repo.create({
-            "report_id": report_id,
-            "reporter_id": report_data["user_id"],
-            "area_id": report_data["area_id"],
-            "description": report_data["description"],
-            "severity": report_data["severity"],
-            "status": Status.OPEN,
-            "location": report_data.get("location"),
-        })
+            # Create finding
+            finding = await finding_repo.create({
+                "report_id": report_id,
+                "reporter_id": report_data["user_id"],
+                "area_id": report_data["area_id"],
+                "description": report_data["description"],
+                "severity": report_data["severity"],
+                "status": Status.OPEN,
+                "location": report_data.get("location"),
+            })
 
-        await db.commit()
+            await db.commit()
 
-    # Get severity emoji
-    severity_emoji = {
-        Severity.LOW: "🟢",
-        Severity.MEDIUM: "🟡",
-        Severity.HIGH: "🟠",
-        Severity.CRITICAL: "🔴",
-    }
+            # Get severity emoji
+            severity_emoji = {
+                Severity.LOW: "🟢",
+                Severity.MEDIUM: "🟡",
+                Severity.HIGH: "🟠",
+                Severity.CRITICAL: "🔴",
+            }
 
-    photo_msg = " (with photo)" if report_data.get("photo") else ""
+            photo_msg = " (with photo)" if report_data.get("photo") else ""
 
-    await update.effective_message.reply_text(
-        f"Your safety finding has been recorded{photo_msg}! ✅\n\n"
-        f"Report ID: {finding.report_id}\n"
-        f"Severity: {severity_emoji[finding.severity]} {finding.severity.title()}\n"
-        f"Status: {finding.status.title().replace('_', ' ')}\n\n"
-        f"Thank you for helping keep our workplace safe! 🦺\n\n"
-        f"Use /report to submit another finding."
-    )
+            await update.effective_message.reply_text(
+                f"Your safety finding has been recorded{photo_msg}! ✅\n\n"
+                f"Report ID: {finding.report_id}\n"
+                f"Severity: {severity_emoji[finding.severity]} {finding.severity.title()}\n"
+                f"Status: {finding.status.title().replace('_', ' ')}\n\n"
+                f"Thank you for helping keep our workplace safe! 🦺\n\n"
+                f"Use /report to submit another finding."
+            )
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        await update.effective_message.reply_text(
+            f"Sorry, there was an error saving your report. Please try again.\n\n"
+            f"Error: {str(e)}"
+        )
 
     # TODO: Send notification to assigned admins
 
