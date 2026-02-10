@@ -1,274 +1,219 @@
 # Deployment Guide
 
-This guide covers deploying the Easy Safety Inspection application to production.
+This guide covers deploying the Easy Safety Inspection application to production on Railway.
 
-## Prerequisites
+## Railway Deployment
 
-- A server with Docker and Docker Compose installed
-- A domain name (optional, for HTTPS)
-- A Telegram Bot Token
-- Production database (PostgreSQL)
-- S3-compatible storage (AWS S3, MinIO, etc.)
+The application is currently deployed on Railway at:
+- Frontend: https://frontend-production-c9d2.up.railway.app
+- Backend API: https://safety-backend-production.up.railway.app
 
-## Environment Variables
+### Project Structure on Railway
 
-Create a `.env` file with the following variables:
+The project has the following services:
+- **frontend**: React web application (served by nginx)
+- **safety-backend**: FastAPI backend server
+- **bot**: Telegram bot worker
+- **Postgres**: PostgreSQL database
 
-```bash
-# Application
-APP_NAME=Easy Safety Inspection
-APP_VERSION=0.1.0
-DEBUG=false
-ENVIRONMENT=production
+### Environment Variables
 
-# Database
-DATABASE_URL=postgresql://user:password@host:5432/dbname
-DATABASE_ECHO=false
+#### Backend (safety-backend)
+| Variable | Value |
+|----------|-------|
+| PORT | 8000 |
+| DATABASE_URL | Railway PostgreSQL connection |
+| SECRET_KEY | Auto-generated |
+| SERVICE_TYPE | api |
 
-# Redis (optional, for caching)
-REDIS_URL=redis://localhost:6379/0
+#### Bot Service
+| Variable | Value |
+|----------|-------|
+| SERVICE_TYPE | bot |
+| TELEGRAM_BOT_TOKEN | Your bot token from @BotFather |
 
-# JWT
-SECRET_KEY=<generate-a-strong-secret-key>
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=10080
+#### Frontend
+| Variable | Value |
+|----------|-------|
+| PORT | 80 |
+| VITE_API_URL | https://safety-backend-production.up.railway.app |
 
-# S3 Storage
-S3_ENDPOINT_URL=https://s3.amazonaws.com
-S3_ACCESS_KEY=your-access-key
-S3_SECRET_KEY=your-secret-key
-S3_BUCKET=safety-inspection
-S3_REGION=us-east-1
-S3_USE_SSL=true
+### Deploying to Railway
 
-# Telegram Bot
-TELEGRAM_BOT_TOKEN=your-telegram-bot-token
-TELEGRAM_WEBHOOK_URL=https://your-domain.com/webhook
+#### Initial Setup
 
-# Frontend
-FRONTEND_URL=https://your-domain.com
+1. Create a new project on Railway
+2. Add a PostgreSQL plugin
+3. Link your GitHub repository
 
-# CORS
-CORS_ORIGINS=https://your-domain.com
+#### Service Configuration
 
-# Notifications
-DAILY_SUMMARY_TIME=09:00
-WEEKLY_SUMMARY_DAY=0
+**Frontend Service:**
+- Dockerfile: `frontend/Dockerfile`
+- Port: 80
+- Environment: `VITE_API_URL`
+
+**Backend Service:**
+- Dockerfile: `backend/Dockerfile`
+- Port: 8000
+- Uses docker-entrypoint.sh to run API server
+
+**Bot Service:**
+- Dockerfile: `backend/Dockerfile`
+- Start Command: `python -m app.bot.worker`
+- Environment: `SERVICE_TYPE=bot`, `TELEGRAM_BOT_TOKEN`
+
+#### Railway Configuration
+
+The root `railway.toml` configures the PostgreSQL plugin and frontend service:
+
+```toml
+# Railway Configuration for Easy Safety Inspection
+
+# PostgreSQL Plugin (shared by all services)
+[[plugins]]
+plugin = "postgresql"
+
+# Frontend Service
+[[services]]
+name = "frontend"
+dockerfilePath = "frontend/Dockerfile"
+[services.env]
+PORT = "80"
 ```
 
-## Production Docker Compose
+The backend services use their own `railway.toml`:
 
-Create a `docker-compose.prod.yml`:
+```toml
+[build]
+builder = "DOCKERFILE"
 
-```yaml
-version: "3.8"
-
-services:
-  backend:
-    image: safety-inspection-backend:latest
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
-      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
-      - S3_SECRET_KEY=${S3_SECRET_KEY}
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-    ports:
-      - "8000:8000"
-    restart: unless-stopped
-
-  bot:
-    image: safety-inspection-backend:latest
-    command: python -m app.bot.worker
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-    restart: unless-stopped
-
-  frontend:
-    image: safety-inspection-frontend:latest
-    ports:
-      - "80:80"
-    restart: unless-stopped
+[deploy]
+startCommand = "python -m app.bot.worker"  # For bot service
 ```
 
-## Building Images
-
-### Backend
-```bash
-cd backend
-docker build -t safety-inspection-backend:latest .
-```
-
-### Frontend
-For production, build a static deployment:
+### Deploying Commands
 
 ```bash
+# Deploy frontend
 cd frontend
-npm run build
-# Use nginx:alpine for serving static files
+railway up --service frontend
+
+# Deploy backend
+cd backend
+railway up --service safety-backend
+
+# Deploy bot
+cd backend
+railway up --service bot
 ```
 
-## Database Migrations
+### Database Setup
 
-Run migrations on the production database:
+After deploying the backend for the first time, run the database initialization:
 
 ```bash
-docker-compose exec backend alembic upgrade head
+curl -X POST https://safety-backend-production.up.railway.app/api/v1/setup/initialize
 ```
 
-Or using the migration container:
+This creates:
+- Super admin user (ADMIN001 / admin123)
+- Default areas (Workshop, Equipment Room, Storage Room, Trackside, Office, Others)
 
-```bash
-docker run --rm \
-  -e DATABASE_URL=$DATABASE_URL \
-  safety-inspection-backend:latest \
-  alembic upgrade head
+## Default Admin Credentials
+
+- **Staff ID**: `ADMIN001`
+- **Password**: `admin123`
+
+⚠️ **Important**: Change the default password after first login!
+
+## Updating Departments and Areas
+
+### Departments
+Located in `backend/app/bot/handlers/register.py`:
+
+```python
+DEPARTMENTS = [
+    "IMD",
+    "RSMD",
+    "FMD",
+    "Others",
+]
 ```
 
-## Creating the Super Admin
-
-Create the initial super admin user:
-
-```bash
-docker-compose exec backend python -c "
-from app.db.session import async_session
-from app.repositories.user import UserRepository
-from app.core.security import get_password_hash
-import asyncio
-
-async def create_admin():
-    async with async_session() as db:
-        repo = UserRepository(db)
-        user = await repo.create({
-            'full_name': 'Super Admin',
-            'staff_id': 'ADMIN001',
-            'department': 'Administration',
-            'section': 'IT',
-            'role': 'super_admin',
-            'password_hash': get_password_hash('secure-password'),
-            'is_active': True,
-        })
-        await db.commit()
-        print(f'Admin created: {user.staff_id}')
-
-asyncio.run(create_admin())
-"
-```
-
-## Setting Up Telegram Webhook
-
-For production, set up a webhook instead of polling:
-
-```bash
-curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook" \
-  -d "url=https://your-domain.com/webhook"
-```
-
-## SSL/HTTPS Configuration
-
-### Using Nginx Reverse Proxy
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name your-domain.com;
-
-    ssl_certificate /etc/ssl/certs/your-cert.pem;
-    ssl_certificate_key /etc/ssl/private/your-key.pem;
-
-    # Frontend
-    location / {
-        root /var/www/frontend/dist;
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Backend API
-    location /api {
-        proxy_pass http://backend:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-
-    # Bot Webhook
-    location /webhook {
-        proxy_pass http://bot:8080;
-    }
-}
-```
-
-### Using Caddy (Automatic HTTPS)
-
-```
-your-domain.com {
-    reverse_proxy /api* backend:8000
-    reverse_proxy /webhook bot:8080
-    root * /var/www/frontend/dist
-    try_files {path} /index.html
-}
-```
+### Areas
+Areas are stored in the database. To update them, use the Areas management page in the web interface or update via database migration.
 
 ## Monitoring
 
 ### Health Checks
 
-- Backend: `http://your-domain.com:8000/health`
+- Backend: `https://safety-backend-production.up.railway.app/health`
 - Response: `{"status": "ok", "app": "Easy Safety Inspection", "version": "0.1.0"}`
 
 ### Logs
 
-View logs for all services:
+View logs using Railway CLI:
 ```bash
-docker-compose logs -f
+# All services
+railway logs
+
+# Specific service
+railway logs --service frontend
+railway logs --service safety-backend
+railway logs --service bot
 ```
 
-View logs for specific service:
+### Service Status
+
 ```bash
-docker-compose logs -f backend
-docker-compose logs -f bot
+railway status
 ```
+
+## Troubleshooting
+
+### Frontend shows "Application failed to respond"
+
+The frontend might be running the wrong code. Redeploy from the frontend directory:
+```bash
+cd frontend
+railway link --service frontend
+railway up
+```
+
+### Bot is not responding
+
+1. Check bot logs: `railway logs --service bot`
+2. Verify TELEGRAM_BOT_TOKEN is complete (not truncated)
+3. Ensure SERVICE_TYPE=bot is set
+
+### Services getting mixed up
+
+The Railway service linkage can get confused. Always deploy from the correct directory:
+- Frontend: Deploy from `frontend/` directory
+- Backend: Deploy from `backend/` directory
+- Bot: Deploy from `backend/` directory
+
+## Security Checklist
+
+- [x] Strong SECRET_KEY generated
+- [x] HTTPS enabled (Railway default)
+- [ ] Change default admin password
+- [ ] Set up regular database backups
+- [ ] Monitor logs for suspicious activity
+- [ ] Keep dependencies updated
 
 ## Backup Strategy
 
 ### Database Backup
 
+Railway provides automatic backups for PostgreSQL. Access them via the Railway dashboard.
+
+### Export Data
+
+Use the API to export findings:
 ```bash
-# Daily backup cron job
-0 2 * * * docker-compose exec -T postgres pg_dump -U postgres safety_inspection > /backups/db_$(date +\%Y\%m\%d).sql
+curl -X POST https://safety-backend-production.up.railway.app/api/v1/findings/export \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -o findings.xlsx
 ```
-
-### S3 Backup
-
-For MinIO, use `mc` (MinIO Client):
-```bash
-mc mirror minio/safety-inspection /backups/s3-$(date +%Y%m%d)
-```
-
-## Scaling Considerations
-
-### Horizontal Scaling
-
-- Run multiple backend instances behind a load balancer
-- Use external PostgreSQL (RDS, Cloud SQL, etc.)
-- Use Redis for session management
-
-### Bot Worker Scaling
-
-For high-volume deployments, run multiple bot workers:
-```yaml
-bot:
-  image: safety-inspection-backend:latest
-  deploy:
-    replicas: 3
-```
-
-## Security Checklist
-
-- [ ] Strong SECRET_KEY generated
-- [ ] HTTPS enabled
-- [ ] Firewall rules configured
-- [ ] Database access restricted
-- [ ] S3 bucket permissions set correctly
-- [ ] Regular security updates applied
-- [ ] Log aggregation set up
-- [ ] Monitoring/alerting configured

@@ -11,15 +11,10 @@ FULL_NAME, STAFF_ID, DEPARTMENT, SECTION, CONFIRM = range(5)
 
 # Predefined departments
 DEPARTMENTS = [
-    "Production",
-    "Quality Assurance",
-    "Maintenance",
-    "Warehouse",
-    "Logistics",
-    "Administration",
-    "Safety",
-    "Engineering",
-    "Other",
+    "IMD",
+    "RSMD",
+    "FMD",
+    "Others",
 ]
 
 
@@ -117,7 +112,7 @@ async def department(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     await update.effective_message.reply_text(
         f"Got it! What is your section within {department}?\n"
-        "(e.g., 'Line A', 'QC Team', 'Night Shift')"
+        "(e.g., KBD, EAL, Civil, L&AV...)"
     )
 
     return SECTION

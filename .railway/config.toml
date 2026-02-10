@@ -1,0 +1,35 @@
+# Railway Monorepo Configuration
+
+# Global plugins
+[[plugins]]
+plugin = "postgresql"
+
+[[plugins]]
+plugin = "redis"
+
+# Services configuration
+[[services]]
+name = "backend"
+[services.build]
+builder = "NIXPACKS"
+[services.source]
+dir = "backend"
+[services.env]
+PORT = "8000"
+
+[[services]]
+name = "bot"
+[services.build]
+builder = "NIXPACKS"
+[services.source]
+dir = "backend"
+startCommand = "python -m app.bot.worker"
+[services.env]
+TELEGRAM_BOT_TOKEN = "${{ secrets.TELEGRAM_BOT_TOKEN }}"
+
+[[services]]
+name = "frontend"
+[services.build]
+builder = "NIXPACKS"
+[services.source]
+dir = "frontend"

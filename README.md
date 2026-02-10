@@ -7,7 +7,7 @@ A safety inspection finding management system that allows users to report safety
 - **Telegram Bot Reporting**: Users can easily report safety findings with photos and descriptions
 - **User Registration**: Simple registration flow via Telegram bot
 - **Role-Based Access Control**: Reporter, Admin, and Super-Admin roles
-- **Area-Based Management**: Hierarchical area structure (2-3 levels)
+- **Area-Based Management**: Predefined areas for categorizing findings
 - **Severity Levels**: Low, Medium, High, Critical
 - **Status Tracking**: Open, In Progress, Resolved, Closed
 - **Notifications**: Real-time alerts and periodic summaries
@@ -18,11 +18,21 @@ A safety inspection finding management system that allows users to report safety
 - **Backend**: Python (FastAPI)
 - **Frontend**: React + TypeScript + Vite
 - **Database**: PostgreSQL
-- **Storage**: S3-compatible (MinIO for local)
 - **Bot Framework**: python-telegram-bot
-- **Task Queue**: APScheduler (for scheduled summaries)
+- **Deployment**: Railway (cloud platform)
 
-## Quick Start
+## Production Deployment
+
+**Services**:
+- Frontend: https://frontend-production-c9d2.up.railway.app
+- Backend API: https://safety-backend-production.up.railway.app
+- Telegram Bot: Running on Railway
+
+**Default Admin Credentials**:
+- Staff ID: `ADMIN001`
+- Password: `admin123`
+
+## Quick Start (Local Development)
 
 ### Prerequisites
 
@@ -37,58 +47,14 @@ git clone <repository-url>
 cd easy-safety-inspection
 ```
 
-2. Copy environment file and configure:
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and add your Telegram bot token:
-```
-TELEGRAM_BOT_TOKEN=your-telegram-bot-token-here
-```
-
-3. Start all services:
+2. Start all services:
 ```bash
 docker-compose up -d
 ```
 
-4. Run database migrations:
-```bash
-docker-compose exec backend alembic upgrade head
-```
-
-5. Create a super-admin user (optional, for development):
-```bash
-docker-compose exec backend python -c "
-from app.db.session import async_session
-from app.repositories.user import UserRepository
-from app.core.security import get_password_hash
-import asyncio
-
-async def create_admin():
-    async with async_session() as db:
-        repo = UserRepository(db)
-        user = await repo.create({
-            'full_name': 'Super Admin',
-            'staff_id': 'ADMIN001',
-            'department': 'Administration',
-            'section': 'IT',
-            'role': 'super_admin',
-            'password_hash': get_password_hash('admin123'),
-            'is_active': True,
-        })
-        await db.commit()
-        print(f'Admin user created: {user.staff_id}')
-
-asyncio.run(create_admin())
-"
-```
-
-### Access the Application
-
+3. Access the application:
 - **Web Interface**: http://localhost:5173
 - **API Documentation**: http://localhost:8000/docs
-- **MinIO Console**: http://localhost:9001
 
 ## Project Structure
 
@@ -103,25 +69,47 @@ easy-safety-inspection/
 │   │   ├── models/         # SQLAlchemy models
 │   │   ├── repositories/   # Database repositories
 │   │   ├── schemas/        # Pydantic schemas
-│   │   ├── services/       # Business logic
 │   │   └── main.py         # FastAPI application
-│   ├── tests/              # Backend tests
 │   ├── requirements.txt    # Python dependencies
 │   └── Dockerfile
 ├── frontend/               # React frontend
 │   ├── src/
 │   │   ├── components/     # React components
-│   │   ├── hooks/          # Custom hooks
 │   │   ├── pages/          # Page components
 │   │   ├── services/       # API client
-│   │   ├── styles/         # CSS files
 │   │   └── types/          # TypeScript types
-│   ├── package.json        # Node dependencies
+│   ├── package.json
 │   └── Dockerfile
 ├── docs/                   # Documentation
-├── docker-compose.yml      # Local development
-└── README.md
+└── railway.toml            # Railway deployment config
 ```
+
+## Configuration
+
+### Departments
+
+Users can register with one of these departments:
+- IMD
+- RSMD
+- FMD
+- Others
+
+### Areas for Reporting
+
+Findings can be reported in these areas:
+- Workshop
+- Equipment Room
+- Storage Room
+- Trackside
+- Office
+- Others
+
+### Severity Levels
+
+- 🟢 **Low** - Minor issue, no immediate risk
+- 🟡 **Medium** - Needs attention soon
+- 🟠 **High** - Significant safety concern
+- 🔴 **Critical** - Immediate danger, urgent action required
 
 ## Usage
 
@@ -130,7 +118,21 @@ easy-safety-inspection/
 1. Open Telegram and search for your bot
 2. Send `/start` to begin
 3. Send `/register` to register your account
-4. Send `/report` to submit a safety finding
+4. Send `/report` to submit a safety finding with photo
+
+**Registration Flow:**
+1. Enter your full name
+2. Enter your Staff ID
+3. Select your department (IMD, RSMD, FMD, Others)
+4. Enter your section (e.g., KBD, EAL, Civil, L&AV...)
+5. Confirm your details
+
+**Reporting Flow:**
+1. Select the area where the issue was found
+2. Describe the safety issue
+3. Upload a photo (or type "skip" to continue without)
+4. Select the severity level
+5. Enter the specific location (optional)
 
 ### For Admins (Web Interface)
 
@@ -138,13 +140,6 @@ easy-safety-inspection/
 2. View findings on the Dashboard
 3. Filter and manage findings in the Findings page
 4. Generate reports in the Reports page
-5. Configure notifications in Settings
-
-### For Super-Admins
-
-- Manage users in Admin → Users
-- Manage areas in Admin → Areas
-- Assign admins to specific areas
 
 ## Development
 
@@ -153,9 +148,8 @@ easy-safety-inspection/
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
-alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
@@ -167,22 +161,6 @@ npm install
 npm run dev
 ```
 
-### Running Tests
-
-```bash
-# Backend tests
-cd backend
-pytest
-
-# Frontend tests (to be implemented)
-cd frontend
-npm run test
-```
-
 ## License
 
 MIT License
-
-## Support
-
-For support and questions, please open an issue on GitHub.

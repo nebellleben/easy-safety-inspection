@@ -53,7 +53,11 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:5173"
 
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:8000"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:5173",
+        "http://localhost:8000",
+        "https://frontend-production-c9d2.up.railway.app"
+    ]
 
     # Notifications
     DAILY_SUMMARY_TIME: str = "09:00"

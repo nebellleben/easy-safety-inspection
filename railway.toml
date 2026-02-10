@@ -1,0 +1,12 @@
+# Railway Configuration for Easy Safety Inspection
+
+# PostgreSQL Plugin (shared by all services)
+[[plugins]]
+plugin = "postgresql"
+
+# Frontend Service
+[[services]]
+name = "frontend"
+dockerfilePath = "frontend/Dockerfile"
+[services.env]
+PORT = "80"

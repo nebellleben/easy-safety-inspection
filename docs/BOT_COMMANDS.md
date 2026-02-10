@@ -35,11 +35,23 @@ Register your account to start reporting findings.
 4. Enter your section/team
 5. Confirm your details
 
+**Department Options:**
+- IMD
+- RSMD
+- FMD
+- Others
+
+**Section Examples:**
+- KBD
+- EAL
+- Civil
+- L&AV
+
 **Required Information:**
 - Full Name (e.g., "John Doe")
 - Staff ID (e.g., "STF00123")
-- Department (select from list)
-- Section (e.g., "Line A", "QC Team")
+- Department (select from list: IMD, RSMD, FMD, Others)
+- Section (e.g., KBD, EAL, Civil, L&AV...)
 
 ---
 
@@ -51,9 +63,17 @@ Submit a new safety finding.
 **Reporting Flow:**
 1. Select the area where the issue was found
 2. Describe the safety issue
-3. Select the severity level
-4. (Optional) Provide the specific location
-5. Confirm your report
+3. Upload a photo (or type "skip" to continue without)
+4. Select the severity level
+5. (Optional) Provide the specific location
+
+**Area Options:**
+- Workshop
+- Equipment Room
+- Storage Room
+- Trackside
+- Office
+- Others
 
 **Severity Levels:**
 - 🟢 **Low** - Minor issue, no immediate risk
@@ -64,20 +84,7 @@ Submit a new safety finding.
 **After Reporting:**
 - You'll receive a Report ID (e.g., SF-2024-0001)
 - Assigned admins will be notified
-- You can track status via `/myreports`
-
----
-
-### /myreports
-View all findings you've reported.
-
-**Usage:** Send `/myreports` to the bot
-
-**Response:** Shows your last 5 reports with:
-- Report ID
-- Severity level
-- Current status
-- Description preview
+- Photo confirmation shown if uploaded
 
 ---
 
@@ -103,7 +110,7 @@ Cancel any ongoing operation (registration, reporting, etc.).
 
 ### 2. Include Location
 - **Bad:** "Near the machines"
-- **Good:** "Production Line A, Station 3, near the emergency stop"
+- **Good:** "Workshop, Station 3, near the emergency stop"
 
 ### 3. Choose Correct Severity
 - **Low**: Minor issues that don't pose immediate risk
@@ -112,7 +119,7 @@ Cancel any ongoing operation (registration, reporting, etc.).
 - **Critical**: Immediate danger - stop work and report now
 
 ### 4. Use Photos
-Photos help admins understand the issue better. You can send photos along with your description.
+Photos help admins understand the issue better. After describing your issue, you'll be prompted to upload a photo. You can also type "skip" to continue without a photo.
 
 ---
 
@@ -124,15 +131,6 @@ Photos help admins understand the issue better. You can send photos along with y
 | **In Progress** | Someone is working on the issue |
 | **Resolved** | Issue has been fixed |
 | **Closed** | Issue verified and closed |
-
----
-
-## Notifications
-
-After registration, you may receive notifications about:
-- Status updates on your reports
-- Requests for more information
-- Confirmations when issues are resolved
 
 ---
 
@@ -156,5 +154,5 @@ After registration, you may receive notifications about:
 
 For technical support or questions about the bot:
 - Contact your safety administrator
-- Check the web dashboard at the provided URL
-- Review your open findings with `/myreports`
+- Check the web dashboard at: https://frontend-production-c9d2.up.railway.app
+- Login with your staff ID and password to view your findings
