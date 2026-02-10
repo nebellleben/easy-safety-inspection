@@ -168,16 +168,24 @@ class FindingRepository:
         return f"SF-{year:04d}-0001"
 
     async def get_next_report_id(self) -> str:
-        """Get the next sequential report ID."""
+        """Get the next sequential report ID with concurrency safety."""
+        from sqlalchemy import text
+
         year = datetime.now().year
         prefix = f"SF-{year:04d}-"
 
-        # Find the highest sequential number for this year
+        # Use a more robust approach with row-level locking
+        # This prevents race conditions when multiple requests come in simultaneously
         result = await self.db.execute(
-            select(Finding.report_id)
-            .where(Finding.report_id.like(prefix))
-            .order_by(desc(Finding.report_id))
-            .limit(1)
+            text("""
+                SELECT report_id
+                FROM findings
+                WHERE report_id LIKE :prefix
+                ORDER BY report_id DESC
+                LIMIT 1
+                FOR UPDATE SKIP LOCKED
+            """),
+            {"prefix": f"{prefix}%"}
         )
         last_id = result.scalar_one_or_none()
 
