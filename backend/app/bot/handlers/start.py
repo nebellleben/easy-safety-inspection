@@ -1,13 +1,18 @@
 """Start command handler."""
+import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, ContextTypes
 
 from app.repositories.user import UserRepository
 from app.db.session import async_session
 
+logger = logging.getLogger(__name__)
+
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle the /start command."""
+    logger.info(f"Received /start command from user {update.effective_user.id if update.effective_user else 'unknown'}")
+
     if not update.effective_user or not update.effective_message:
         return
 

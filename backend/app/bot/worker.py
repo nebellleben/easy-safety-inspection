@@ -5,6 +5,7 @@ import logging
 from app.bot import get_bot
 from app.core.config import settings
 from telegram import BotCommand
+from telegram.ext import Application
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -29,11 +30,19 @@ async def setup_bot_commands(application) -> None:
     logger.info("Bot commands registered")
 
 
+async def error_handler(update, context) -> None:
+    """Log errors caused by updates."""
+    logger.error(f"Update {update} caused error {context.error}")
+
+
 async def main() -> None:
     """Start the bot."""
     logger.info("Starting Telegram bot...")
 
     application = get_bot()
+
+    # Add error handler
+    application.add_error_handler(error_handler)
 
     # Start the bot using polling
     # In production, you should use webhook instead
