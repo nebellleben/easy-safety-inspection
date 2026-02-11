@@ -4,20 +4,9 @@ from telegram.ext import Application
 from app.core.config import settings
 
 
-async def setup_bot_commands(application: Application) -> None:
-    """Set up bot commands for the Telegram command menu."""
-    from app.bot.handlers.menu import get_bot_commands
-
-    commands = get_bot_commands()
-    await application.bot.set_my_commands(commands)
-
-
 def create_bot_application() -> Application:
     """Create and configure the Telegram bot application."""
     application = Application.builder().token(settings.TELEGRAM_BOT_TOKEN).build()
-
-    # Set up bot commands on startup
-    application.post_init = setup_bot_commands
 
     # Register handlers - order matters! Conversation handlers first
     from app.bot.handlers import (

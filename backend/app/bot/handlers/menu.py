@@ -48,14 +48,9 @@ async def menu_callback_handler(update: Update, context: ContextTypes.DEFAULT_TY
     action = query.data.replace("menu_", "")
 
     if action == "report":
-        await query.edit_message_text(
-            "📝 Starting a new safety finding report...\n\n"
-            "Please use /report to begin.",
-            parse_mode="Markdown"
-        )
         # Trigger report command
-        from app.bot.handlers.report import start as report_start
-        await report_start(update, context)
+        from app.bot.handlers.report import report_command
+        await report_command(update, context)
 
     elif action == "myreports":
         from app.bot.handlers.common import my_reports_command
